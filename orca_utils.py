@@ -33,19 +33,20 @@ def findRegion(_center, radius, _point, _tangent_point_1, _tangent_point_2):
         return 1
     elif cnt == 1:
         return 2
-    elif cnt == 2 or cnt == 3:
-        return 3
     else:
-        assert(false)
-        return -1
+        return 3
 
 
 def projectOnCircle(center, radius, point):
     #can be implemented using library too
-    ray_vec_norm = np.linalg.norm(center-point)
-    if(ray_vec_norm<eps):
-        pass #TODO handle this case
     ray_vec = point-center
+    ray_vec_norm = np.linalg.norm(center-point)
+    if(ray_vec_norm == 0):
+        ray_vec_norm = np.linalg.norm(center-point/1.1)
+        ray_vec = point/1.1-center
+        ray_unit_vec = ray_vec/ray_vec_norm
+        return center+ray_unit_vec*radius
+    
     ray_unit_vec = ray_vec/ray_vec_norm
     return center+ray_unit_vec*radius
 
