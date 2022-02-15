@@ -1,7 +1,7 @@
 import cvxpy as cp
 import numpy as np
 import matplotlib.pyplot as plt
-
+import casadi
 class Agent:
     
     def __init__(self, A, B, G, g, H, h, radius, _id, x_0, Q, R, x_F):
@@ -39,23 +39,32 @@ class Agent:
         self.evolve_state(u)
 
 
+    def add_orca_constraints(self, constraints):
+        pass
+
+
     def find_u_orca_mpc(self, N):
         n_x = self.A.shape[1]
         n_u = self.B.shape[1]
-        x = cp.Variable((N+1,n_x))
-        u = cp.Variable((N,n_u))
-        objective_sum = cp.quad_form(x[[0],:].T-self.x_F,self.Q)
-        constraints = [x[[0],:].T == self.x[-1]]
+        opti = casadi.Opti()
+        x = opti.variable(N+1,n_x)
+        u = opti.variable(N,n_u)
+        objective_sum = (x[[0],:].T-self.x_F).T @ self.Q @ (x[[0],:].T-self.x_F)
+        opti.subject_to(x[[0],:].T == self.x[-1])
         for i in range(0,N):
-            objective_sum += cp.quad_form(x[[i+1],:].T-self.x_F,self.Q)+cp.quad_form(u[[i],:].T, self.R)
-            constraints.append(x[[i+1],:].T == self.A @ x[[i],:].T + self.B @ u[[i],:].T)
-            constraints.append(self.H @ x[[i+1],:].T <= self.h)
-            constraints.append(self.G @ u[[i],:].T <= self.g)
-            # TODO add ORCA constraints
-        objective = cp.Minimize(objective_sum)
-        prob = cp.Problem(objective, constraints)
-        prob.solve()
-        return u.value[[0],:].T
+            objective_sum += (x[[i+1],:].T-self.x_F).T @ self.Q @ (x[[i+1],:].T-self.x_F) + u[[i],:] @ self.R @ u[[i],:].T
+            opti.subject_to(x[[i+1],:].T == self.A @ x[[i],:].T + self.B @ u[[i],:].T)
+            if not (self.H @ x[[i+1],:].T <= self.h).is_constant():
+                opti.subject_to(self.H @ x[[i+1],:].T <= self.h)
+            if not (self.G @ u[[i],:].T <= self.g).is_constant():
+                opti.subject_to(self.G @ u[[i],:].T <= self.g)
+            # self.add_orca_constraints(constraints)
+        
+        opti.minimize(objective_sum)
+        opti.solver('ipopt')
+        sol = opti.solve()
+
+        return sol.value(u)[[0],:].T
 
 
     def find_u_orca(self):
