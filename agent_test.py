@@ -15,7 +15,7 @@ x_F = np.array([[5],[5],[0],[0]])
 agent = Agent(A, B, G, g, H, h, radius=1, _id=1, x_0=np.zeros((4,1)), Q=Q, R=R, x_F=x_F)
 
 for i in range(10):
-    agent.orca_mpc_update(N)
+    agent.orca_mpc_update(N, [])
 
 agent.plot_trajectory()
 plt.legend()

@@ -32,9 +32,11 @@ while(true):
 
     center = np.array([[x_c,y_c]]).T
     point = np.array([[x_p,y_p]]).T
-    projected_point = projectOnVO(center, radius, point)
-    
-    theta = np.linspace(0,2*np.pi,100)
+    projection = projectOnVO(center, radius, point)
+    projected_point = projection["projected_point"]
+    region = projection["region"]
+    print(projected_point, region)
+    theta = np.linspace(0,2*np.pi,10)
 
     x1 = center[0,0]+radius*np.cos(theta)
     x2 = center[1,0]+radius*np.sin(theta)

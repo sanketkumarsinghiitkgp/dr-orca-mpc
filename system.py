@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from agent import Agent
+import copy
+from tqdm import tqdm
 class System:
     
     def __init__(self, A, B, G, g, H, h, radius, Q, R, x_0_list, x_F_list ):
@@ -20,8 +22,19 @@ class System:
         x_0_list = [np.array([[a], [a], [0], [0]]), np.array([[a], [-a], [0], [0]]), np.array([[-a], [-a], [0], [0]]), np.array([[-a], [a], [0], [0]])]
         x_F_list = []
         for i in range(4):
-            x_F_list.append(x_0_list[(i+2)%4])
+            x_F_list.append(copy.deepcopy(x_0_list[(i+2)%4]))
         return x_0_list,x_F_list
+
+
+    @staticmethod
+    def line_segment_starting_and_end_points(side_length):
+        a = side_length/2
+        x_0_list = [np.array([[a], [0], [0], [0]]), np.array([[-a], [0], [0], [0]])]
+        x_0_list_duplicate = copy.deepcopy(x_0_list)
+        x_F_list = []
+        for i in range(2):
+            x_F_list.append(copy.deepcopy(x_0_list_duplicate[(i+1)%2]))
+        return x_0_list, x_F_list
 
 
     def norm_sum(self):
@@ -31,13 +44,25 @@ class System:
         return sm
 
 
-    def simulate_orca_mpc(self,max_iter = 50, eps=1e-6, N = 5):
-        for iter_num in range(max_iter):
+    def simulate_orca_mpc(self,max_iter = 200, eps=1e-6, N = 1):
+        for iter_num in tqdm(range(max_iter)):
+            if(iter_num == 3):
+                print("here")
+                print("good")
             if(self.norm_sum()<eps):
                 print(f'Terminated after {iter_num} iterations')
                 return
             for agent in self.agent_list:
-                agent.orca_mpc_update(N)
+                agent.orca_mpc_update(N, self.agent_list)
+        print(f'Terminated after {max_iter} iterations')
+    
+    def simulate_orca(self,max_iter = 5, eps=1e-6):
+        for iter_num in tqdm(range(max_iter)):
+            if(self.norm_sum()<eps):
+                print(f'Terminated after {iter_num} iterations')
+                return
+            for agent in self.agent_list:
+                agent.orca_update(self.agent_list)
         print(f'Terminated after {max_iter} iterations')
 
     def plot_trajectory(self):

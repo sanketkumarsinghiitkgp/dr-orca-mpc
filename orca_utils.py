@@ -55,7 +55,7 @@ def projectOnLine(point_on_line, point):
     r = Ray(columnArrayToPoint(point_on_line), columnArrayToPoint(2*point_on_line))
     projected_point = r.projection(columnArrayToPoint(point))
     if r.contains(projected_point):
-        print(N(projected_point))
+        # print(N(projected_point))
         return pointToColumnArray(projected_point)
     else:
         return None
@@ -69,39 +69,44 @@ def findTangentPoints(_center, radius):
 
 
 def projectOnVO(center, radius, point):
+    print("center: "+str(center))
+    print("point: "+str(point))
+    print("radius: "+str(radius))
+    # xyz = input("xyz")
+    # print("norm is "+str(np.linalg.norm(center-np.zeros((2,1)))))
+    if np.linalg.norm(center-np.zeros((2,1)))<=radius:
+        raise Exception("Collision !!!"+str(np.linalg.norm(center-np.zeros((2,1)))))
     projection_on_circle = projectOnCircle(center, radius, point)
-    if np.linalg.norm(point-np.zeros((2,1)))<eps:
-        return projection_on_circle
+    if np.all(point == np.zeros((2,1))):
+        return {"region": 1, "projected_point": projection_on_circle}
     tangent_point_1, tangent_point_2 = findTangentPoints(center, radius)
     projection_on_line_1 = projectOnLine(tangent_point_1, point)
     projection_on_line_2 = projectOnLine(tangent_point_2, point)
     region = findRegion(center, radius, point, tangent_point_1, tangent_point_2)
-    print(region)
     dist_c = np.linalg.norm(point - projection_on_circle)
     dist_1 = np.linalg.norm(point - projection_on_line_1) if np.any(projection_on_line_1!=None) else inf
     dist_2 = np.linalg.norm(point - projection_on_line_2) if np.any(projection_on_line_2!=None) else inf
     if region == 1:
         min_dist = min(dist_c, dist_1, dist_2)
         if min_dist == dist_c:
-            return projection_on_circle
+            return {"region": region, "projected_point": projection_on_circle}
         elif min_dist == dist_1:
-            return projection_on_line_1
+            return {"region": region, "projected_point": projection_on_line_1}
         elif min_dist == dist_2:
-            return projection_on_line_2
+            return {"region": region, "projected_point": projection_on_line_2}
         else:
             assert(false)
     elif region == 2:
-        return projection_on_circle
+        return {"region": region, "projected_point": projection_on_circle}
     elif region == 3:
         min_dist = min(dist_1, dist_2)
         if min_dist == dist_1:
-            return projection_on_line_1
+            return {"region": region, "projected_point": projection_on_line_1}
         elif min_dist == dist_2:
-            return projection_on_line_2
+            return {"region": region, "projected_point": projection_on_line_2}
         else:
             assert(false)
     else:
         assert(false)
-    
-    return projected_point
+        return {"region": region, "projected_point": None}
 
