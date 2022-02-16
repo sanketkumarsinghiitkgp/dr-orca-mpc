@@ -24,6 +24,9 @@ system = System(A, B, G, g, H, h, radius, Q, R, x_0_list, x_F_list )
 system.simulate_orca_mpc(N = N)
 # system.simulate_orca()
 system.plot_trajectory()
+
+for i in range(len(x_0_list)):
+    plt.scatter([x_F_list[i][0]], [x_F_list[i][1]], label= "Destination for Agent id: "+str(i))
 plt.legend()
 plt.xlim(-2, 2)
 plt.ylim(-2,2)
