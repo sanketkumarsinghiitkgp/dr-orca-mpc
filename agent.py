@@ -46,7 +46,7 @@ class Agent:
 
     def add_orca_constraints(self, opti, x, idx, p_a, p_b, v_a, v_b):
         projection = projectOnVO((p_b-p_a)/self.tau, 2*self.radius/self.tau, v_a-v_b)
-        print("Projection is" + str(projection["projected_point"]), projection["region"])
+        # print("Projection is" + str(projection["projected_point"]), projection["region"])
         # abc = input("abc")
         region = projection["region"]
         u  = projection["projected_point"]-(v_a-v_b)
@@ -100,8 +100,8 @@ class Agent:
         if N >1:
             return sol.value(u)[[0],:].T
         else:
-            print(sol.value(u))
-            print(sol.value(objective_sum))
+            # print(sol.value(u))
+            # print(sol.value(objective_sum))
             #DEBUG
             #EXPERIMENT
             return sol.value(u).reshape((n_u,1))

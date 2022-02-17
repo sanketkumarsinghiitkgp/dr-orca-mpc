@@ -54,6 +54,10 @@ class System:
                 return
             for agent in self.agent_list:
                 agent.orca_mpc_update(N, self.agent_list)
+            plt.figure().clear()
+            self.plot_trajectory()
+            plt.savefig("system_trajectory.png")
+        print(f'Terminated after {max_iter} iterations')
         print(f'Terminated after {max_iter} iterations')
     
     def simulate_orca(self,max_iter = 5, eps=1e-6):
@@ -63,7 +67,7 @@ class System:
                 return
             for agent in self.agent_list:
                 agent.orca_update(self.agent_list)
-        print(f'Terminated after {max_iter} iterations')
+            
 
     def plot_trajectory(self):
         for agent in self.agent_list:
