@@ -10,7 +10,7 @@ def pointToColumnArray(point):
 
 
 def columnArrayToPoint(_point):
-    return Point(_point[0,0], _point[1,0])
+    return Point(_point[0,0], _point[1,0], evaluate=False)
 
 
 def findRegion(_center, radius, _point, _tangent_point_1, _tangent_point_2):
@@ -52,7 +52,7 @@ def projectOnCircle(center, radius, point):
 
 
 def projectOnLine(point_on_line, point):
-    r = Ray(columnArrayToPoint(point_on_line), columnArrayToPoint(2*point_on_line))
+    r = Ray(columnArrayToPoint(point_on_line), columnArrayToPoint(2*point_on_line), evaluate=False)
     projected_point = r.projection(columnArrayToPoint(point))
     if r.contains(projected_point):
         # print(N(projected_point))
@@ -64,7 +64,7 @@ def projectOnLine(point_on_line, point):
 def findTangentPoints(_center, radius):
     center = columnArrayToPoint(_center)
     circle = Circle(center, radius)
-    line_1, line_2 = circle.tangent_lines(Point(0,0))
+    line_1, line_2 = circle.tangent_lines(Point(0,0, evaluate=False))
     return pointToColumnArray(line_1.p2), pointToColumnArray(line_2.p2)
 
 
@@ -107,6 +107,6 @@ def projectOnVO(center, radius, point):
         else:
             assert(false)
     else:
-        assert(false)
+        raise Exception("Different Region")
         return {"region": region, "projected_point": None}
 

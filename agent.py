@@ -123,12 +123,14 @@ class Agent:
         plt.plot(x1,x2, color = self.color_list[self._id])
 
 
-    def plot_trajectory(self):
+    def plot_trajectory(self, plot_circles_flag=True):
         print(f'agent_id: {self._id}:')
         print("pos_x "+str([x_i[0,0] for x_i in self.x]))
         print("pos_y "+str([x_i[1,0] for x_i in self.x]))
         print("vel_x "+str([x_i[2,0] for x_i in self.x]))
         print("vel_y "+str([x_i[3,0] for x_i in self.x]))
         plt.plot([x_i[0,0] for x_i in self.x], [x_i[1,0] for x_i in self.x], label="Agent id: "+str(self._id))
-        self.plot_circles([x_i[0,0] for x_i in self.x], [x_i[1,0] for x_i in self.x], self.radius)
+        print(plot_circles_flag)
+        if plot_circles_flag:
+            self.plot_circles([x_i[0,0] for x_i in self.x], [x_i[1,0] for x_i in self.x], self.radius)
 

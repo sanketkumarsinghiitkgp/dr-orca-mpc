@@ -44,7 +44,7 @@ class System:
         return sm
 
 
-    def simulate_orca_mpc(self,max_iter = 200, eps=1e-6, N = 1):
+    def simulate_orca_mpc(self,max_iter = 200, eps=1e-6, N = 1, plot_circles_flag = True):
         for iter_num in tqdm(range(max_iter)):
             if(iter_num == 3):
                 print("here")
@@ -55,11 +55,11 @@ class System:
             for agent in self.agent_list:
                 agent.orca_mpc_update(N, self.agent_list)
             plt.figure().clear()
-            self.plot_trajectory()
+            self.plot_trajectory(plot_circles_flag)
             plt.savefig("system_trajectory.png")
         print(f'Terminated after {max_iter} iterations')
         print(f'Terminated after {max_iter} iterations')
-    
+
     def simulate_orca(self,max_iter = 5, eps=1e-6):
         for iter_num in tqdm(range(max_iter)):
             if(self.norm_sum()<eps):
@@ -69,6 +69,6 @@ class System:
                 agent.orca_update(self.agent_list)
             
 
-    def plot_trajectory(self):
+    def plot_trajectory(self, plot_circles_flag):
         for agent in self.agent_list:
-            agent.plot_trajectory()
+            agent.plot_trajectory(plot_circles_flag)
