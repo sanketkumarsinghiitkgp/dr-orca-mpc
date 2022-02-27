@@ -21,7 +21,7 @@ x_0_list, x_F_list = System.square_vertex_starting_and_end_points(side_length)
 for i in range(len(x_0_list)):
     x_0_list[i]+=np.array([[0],[vert_deviation_list[i]],[0],[0]])
 print(x_F_list)
-plot_circles_flag = True
+plot_circles_flag = False
 system = System(A, B, G, g, H, h, radius, Q, R, x_0_list, x_F_list )
 system.simulate_orca_mpc(N = N, plot_circles_flag = plot_circles_flag)
 os.remove("system_trajectory.png")

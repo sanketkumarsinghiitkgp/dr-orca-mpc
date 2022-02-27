@@ -5,13 +5,17 @@ import copy
 from tqdm import tqdm
 class System:
     
-    def __init__(self, A, B, G, g, H, h, radius, Q, R, x_0_list, x_F_list ):
+    def __init__(self, A, B, G, g, H, h, radius, Q, R, x_0_list, x_F_list , is_agent_dummy_list=[]):
         # it only makes sense to have velocity constraints not position in G
         assert(len(x_0_list) == len(x_F_list))
         self.num_agents = len(x_0_list)
+        if is_agent_dummy_list == []:
+            is_agent_dummy_list = [False]*self.num_agents
+        assert(len(is_agent_dummy_list) == self.num_agents)
         self.agent_list = []
+        self.is_agent_dummy_list = is_agent_dummy_list
         for i in range(self.num_agents):
-            new_agent = Agent(A, B, G, g, H, h, radius=radius, _id=i, x_0=x_0_list[i], Q=Q, R=R, x_F=x_F_list[i])
+            new_agent = Agent(A, B, G, g, H, h, radius=radius, _id=i, x_0=x_0_list[i], Q=Q, R=R, x_F=x_F_list[i], is_agent_dummy_list = self.is_agent_dummy_list)
             self.agent_list.append(new_agent)
 
 
@@ -40,33 +44,36 @@ class System:
     def norm_sum(self):
         sm = 0
         for agent in self.agent_list:
-            sm += agent.find_norm()
+            if not self.is_agent_dummy_list[agent._id]:
+                sm += agent.find_norm()
         return sm
 
 
     def simulate_orca_mpc(self,max_iter = 200, eps=1e-6, N = 1, plot_circles_flag = True):
+        traj_cost = 0
         for iter_num in tqdm(range(max_iter)):
-            if(iter_num == 3):
-                print("here")
-                print("good")
-            if(self.norm_sum()<eps):
-                print(f'Terminated after {iter_num} iterations')
-                return
             for agent in self.agent_list:
                 agent.orca_mpc_update(N, self.agent_list)
             plt.figure().clear()
             self.plot_trajectory(plot_circles_flag)
             plt.savefig("system_trajectory.png")
-        print(f'Terminated after {max_iter} iterations')
-        print(f'Terminated after {max_iter} iterations')
-
-    def simulate_orca(self,max_iter = 5, eps=1e-6):
-        for iter_num in tqdm(range(max_iter)):
-            if(self.norm_sum()<eps):
+            cur_norm_sum = self.norm_sum()
+            traj_cost += cur_norm_sum
+            if(cur_norm_sum<eps):
                 print(f'Terminated after {iter_num} iterations')
-                return
-            for agent in self.agent_list:
-                agent.orca_update(self.agent_list)
+                return traj_cost
+        print(f'Terminated after {max_iter} iterations')
+        print(traj_cost)
+        abc = input("abc")
+        return traj_cost
+
+    # def simulate_orca(self,max_iter = 5, eps=1e-6):
+    #     for iter_num in tqdm(range(max_iter)):
+    #         if(self.norm_sum()<eps):
+    #             print(f'Terminated after {iter_num} iterations')
+    #             return
+    #         for agent in self.agent_list:
+    #             agent.orca_update(self.agent_list)
             
 
     def plot_trajectory(self, plot_circles_flag):

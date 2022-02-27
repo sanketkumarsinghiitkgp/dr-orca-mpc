@@ -6,7 +6,7 @@ from orca_utils import projectOnVO
 eps = 1e-6
 class Agent:
     
-    def __init__(self, A, B, G, g, H, h, radius, _id, x_0, Q, R, x_F, tau=1):
+    def __init__(self, A, B, G, g, H, h, radius, _id, x_0, Q, R, x_F, is_agent_dummy_list, tau = 1):
         self.A = A
         self.B = B
         self.G = G
@@ -22,10 +22,14 @@ class Agent:
         self.u = []
         self.tau = tau
         self.color_list = ["b", "g", "r", "c", "m", "y", "k", "w"]
+        self.is_agent_dummy_list = is_agent_dummy_list
+        n_x = self.A.shape[1]
+        n_u = self.B.shape[1]
+        self.prev_mpc_traj = None
 
 
     def find_norm(self):
-        return np.linalg.norm(self.x[-1]-self.x_F)
+        return (self.x[-1]-self.x_F).T @ self.Q @ (self.x[-1]-self.x_F)+(self.u[-1]).T @ self.R @ self.u[-1]
 
 
     def evolve_state(self, u):
@@ -44,31 +48,46 @@ class Agent:
         self.evolve_state(u)
 
 
-    def add_orca_constraints(self, opti, x, idx, p_a, p_b, v_a, v_b):
+    def add_orca_constraints(self, opti, x, idx, p_a, p_b, v_a, v_b, is_neighbor_dummy):
         projection = projectOnVO((p_b-p_a)/self.tau, 2*self.radius/self.tau, v_a-v_b)
         # print("Projection is" + str(projection["projected_point"]), projection["region"])
         # abc = input("abc")
         region = projection["region"]
         u  = projection["projected_point"]-(v_a-v_b)
         is_outside = region == 1
-        if is_outside:
-            opti.subject_to((x[[idx],2:4].T-(v_a+u/2)).T@u<=0)
-            pass
-        else:
-            #TODO this is a lazy hack
-            opti.subject_to((x[[idx],2:4].T-(v_a+u/2)).T@u>=0)
-            pass
+        if is_neighbor_dummy:
+            if is_outside:
+                opti.subject_to((x[[idx],2:4].T-(v_a+u)).T@u<=0)
+                pass
+            else:
+                opti.subject_to((x[[idx],2:4].T-(v_a+u)).T@u>=0)
+                pass
+        else:    
+            if is_outside:
+                opti.subject_to((x[[idx],2:4].T-(v_a+u/2)).T@u<=0)
+                pass
+            else:
+                opti.subject_to((x[[idx],2:4].T-(v_a+u/2)).T@u>=0)
+                pass
 
 
     def find_u_orca_mpc(self, N, agent_list):
         n_x = self.A.shape[1]
         n_u = self.B.shape[1]
+        if self.is_agent_dummy_list[self._id]:
+            return self.x[-1][2:4]
         opti = casadi.Opti()
         x = opti.variable(N+1,n_x)
         u = opti.variable(N,n_u)
         objective_sum = (x[[0],:].T-self.x_F).T @ self.Q @ (x[[0],:].T-self.x_F)
         opti.subject_to(x[[0],:].T == self.x[-1])
         x_cur_pred = self.x[-1]
+        if self.prev_mpc_traj == None:
+            self.prev_mpc_traj = [x_cur_pred]
+            for i in range(0,N-1):
+                self.prev_mpc_traj.append(np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]])@self.prev_mpc_traj[-1])
+        else:
+            self.prev_mpc_traj[0] = x_cur_pred
         agent_cur_pred_list = [agent.x[len(self.x)-1] for agent in agent_list]
         vel_cur_pred = self.x[-1][2:4]
         for i in range(0,N):
@@ -84,19 +103,22 @@ class Agent:
                     continue
                 #assumes agents are ordered by id (0 indexed)
                 # EXPERIMENT
-                p_a = x_cur_pred[0:2]
+                p_a = self.prev_mpc_traj[i][0:2]
                 p_b = agent_cur_pred_list[agent._id][0:2]
-                v_a = x_cur_pred[2:4]
+                v_a = self.prev_mpc_traj[i][2:4]
                 v_b = agent_cur_pred_list[agent._id][2:4]
                 # END EXPERIMENT
-                self.add_orca_constraints(opti, x, i+1, p_a, p_b, v_a, v_b) # TODO add this for all neighbors and in general upgrade this
+                self.add_orca_constraints(opti, x, i+1, p_a, p_b, v_a, v_b, is_neighbor_dummy = self.is_agent_dummy_list[agent._id]) # TODO add this for all neighbors and in general upgrade this
                 agent_cur_pred_list[agent._id] = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]])@agent_cur_pred_list[agent._id]
-            x_cur_pred = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]])@x_cur_pred
-                
+            # using previous mpc solution.
+            # x_cur_pred = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]])@x_cur_pred
         
         opti.minimize(objective_sum)
         opti.solver('ipopt')
         sol = opti.solve()
+        self.prev_mpc_traj = [sol.value(x)[[i+1],:].T for i in range(0,N)]
+        print(self.prev_mpc_traj)
+        # abc = input("abc")
         if N >1:
             return sol.value(u)[[0],:].T
         else:
@@ -106,9 +128,9 @@ class Agent:
             #EXPERIMENT
             return sol.value(u).reshape((n_u,1))
 
-    def find_u_orca(self, agent_list):
-        u = self.find_u_orca_mpc(1, agent_list)
-        return u
+    # def find_u_orca(self, agent_list):
+    #     u = self.find_u_orca_mpc(1, agent_list)
+    #     return u
 
 
     def plot_circles(self, x_list, y_list, radius):
