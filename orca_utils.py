@@ -2,6 +2,7 @@ import cvxpy as cp
 import numpy as np
 from sympy import *
 from sympy.geometry import *
+from math import sqrt, acos, atan2, sin, cos
 
 eps = 1e-6
 inf = 1e30
@@ -62,10 +63,26 @@ def projectOnLine(point_on_line, point):
 
 
 def findTangentPoints(_center, radius):
-    center = columnArrayToPoint(_center)
-    circle = Circle(center, radius)
-    line_1, line_2 = circle.tangent_lines(Point(0,0))
-    return pointToColumnArray(line_1.p2), pointToColumnArray(line_2.p2)
+    Cx = _center[0,0]
+    Cy = _center[1,0]
+    Px = 0
+    Py = 0
+    a = radius
+    b = sqrt((Px - Cx)**2 + (Py - Cy)**2)  # hypot() also works here
+    th = acos(a / b)  # angle theta
+    d = atan2(Py - Cy, Px - Cx)  # direction angle of point P from C
+    d1 = d + th  # direction angle of point T1 from C
+    d2 = d - th  # direction angle of point T2 from C
+
+    T1x = Cx + a * cos(d1)
+    T1y = Cy + a * sin(d1)
+    T2x = Cx + a * cos(d2)
+    T2y = Cy + a * sin(d2)
+    return np.array([[T1x,T1y]]).T, np.array([[T2x,T2y]]).T 
+    # center = columnArrayToPoint(_center)
+    # circle = Circle(center, radius)
+    # line_1, line_2 = circle.tangent_lines(Point(0,0))
+    # return pointToColumnArray(line_1.p2), pointToColumnArray(line_2.p2)
 
 
 def projectOnVO(center, radius, point):

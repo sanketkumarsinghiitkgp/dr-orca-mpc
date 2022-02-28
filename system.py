@@ -49,14 +49,15 @@ class System:
         return sm
 
 
-    def simulate_orca_mpc(self,max_iter = 200, eps=1e-6, N = 1, plot_circles_flag = True):
+    def simulate_orca_mpc(self,max_iter = 200, eps=1e-6, N = 1, plot_circles_flag = True, plot_steps = True):
         traj_cost = 0
         for iter_num in tqdm(range(max_iter)):
             for agent in self.agent_list:
                 agent.orca_mpc_update(N, self.agent_list)
-            plt.figure().clear()
-            self.plot_trajectory(plot_circles_flag)
-            plt.savefig("system_trajectory.png")
+            if plot_steps:
+                plt.figure().clear()
+                self.plot_trajectory(plot_circles_flag)
+                plt.savefig("system_trajectory.png")
             cur_norm_sum = self.norm_sum()
             traj_cost += cur_norm_sum
             if(cur_norm_sum<eps):

@@ -49,6 +49,11 @@ class Agent:
 
 
     def add_orca_constraints(self, opti, x, idx, p_a, p_b, v_a, v_b, is_neighbor_dummy):
+        print("p_b"+str(p_b))
+        print("p_a"+str(p_a))
+        print("v_b"+str(v_b))
+        print("v_a"+str(v_a))
+        
         projection = projectOnVO((p_b-p_a)/self.tau, 2*self.radius/self.tau, v_a-v_b)
         # print("Projection is" + str(projection["projected_point"]), projection["region"])
         # abc = input("abc")
