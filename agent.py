@@ -146,7 +146,10 @@ class Agent:
             # x_cur_pred = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]])@x_cur_pred
         
         opti.minimize(objective_sum)
-        opti.solver('ipopt')
+        ## EXTRA OPTIONS FOR MA27 LINEAR SOLVER
+        opts = {}
+		opts["ipopt.linear_solver"] = 'ma27'
+        opti.solver("ipopt",opts)
         sol = opti.solve()
         self.prev_mpc_traj = [sol.value(x)[[i+1],:].T for i in range(0,N)]
         print(self.prev_mpc_traj)
