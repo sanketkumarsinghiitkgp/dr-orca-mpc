@@ -3,23 +3,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import time
-# N_list = [i for i in range(1,51,10)] works well
-N_list = [i for i in range(1,10,1)] # works better
-
-# N_list = [2]
-open('costs_log.txt', 'w').close()
+N = 3
+# N_list = [2]10se()
 file = open("costs_log.txt","w")
 lines = []
 cost_vals = []
 time_vals = []
-dataset_size = 1
-for N in N_list:
+dataset_size_list = [x for x in range(1,200,20)]
+for dataset_size in dataset_size_list:
     side_length = 2
     radius = 0.1*side_length
     A = np.array([[1, 0, 0, 0],[0, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
     B = np.array([[1, 0],[0, 1],[1, 0],[0, 1]])
-    # A = np.array([[1, 0, 1, 0],[0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]])
-    # B = np.array([[0, 0],[0, 0],[1, 0],[0, 1]])
     Q = np.diag([1, 1, 0.1, 0.1])
     R = np.diag([0.1,0.1])
     v_max = 10*radius
@@ -27,11 +22,12 @@ for N in N_list:
     h = v_max*np.array([[1], [1], [1], [1]])
     G = np.zeros((2,2))
     g = np.zeros((2,1))
-    file_name = "system_trajectory_"+str(N)+".png"
+    file_name = "system_trajectory_ds"+str(dataset_size)+".png"
     dev = 0.01
     vert_deviation_list = [dev*radius,-dev*radius,0,2*dev*radius]
     # vert_deviation_list = [0,0,0,0]
     # x_0_list, x_F_list = System.diagonal_line_segment_starting_and_end_points(side_length)
+    
     # x_0_list, x_F_list = System.line_segment_starting_and_end_points(side_length)
     x_0_list, x_F_list = System.square_vertex_starting_and_end_points(side_length)
     for i in range(len(x_0_list)):
@@ -60,23 +56,23 @@ for N in N_list:
     plt.xlim(-(side_length*1.1), (side_length*1.1))
     plt.savefig(file_name)
     print(traj_cost)
-    lines.append("Cost for N = "+str(N)+" "+str(traj_cost)+"\n")
+    lines.append("Cost for ds = "+str(dataset_size)+" "+str(traj_cost)+"\n")
     cost_vals.append(traj_cost[0,0])
     #was not working, because the collision condition was wrong.
     #head on collision is a corner case.
 print(cost_vals)
 plt.figure()
-plt.plot(N_list, cost_vals)
+plt.plot(dataset_size_list, cost_vals)
 
-plt.xlabel("Prediction Horizon")
+plt.xlabel("Dataset Size")
 plt.ylabel("Trajectory cost")
-plt.savefig("Cost_vs_N.png")
+plt.savefig("Cost_vs_DS.png")
 print(time_vals)
 plt.figure()
 
-plt.xlabel("Prediction Horizon")
+plt.xlabel("Dataset Size")
 plt.ylabel("Time taken for computing 1 control input")
-plt.plot(N_list, time_vals)
-plt.savefig("Time_vs_N.png")
+plt.plot(dataset_size_list, time_vals)
+plt.savefig("Time_vs_DS.png")
 file.writelines(lines)
 file.close()
