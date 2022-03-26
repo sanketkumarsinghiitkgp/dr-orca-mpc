@@ -6,12 +6,13 @@ import casadi
 from orca_utils import projectOnVO
 from atharva_code import get_u
 import copy
+from flags import *
 eps = 1e-6
 
 
 class Agent:
     
-    def __init__(self, A, B, G, g, H, h, radius, _id, x_0, Q, R, x_F, is_agent_dummy_list, tau = 1):
+    def __init__(self, A, B, G, g, H, h, radius, _id, x_0, Q, R, x_F, is_agent_dummy_list, tau = 1, sigma = 0):
         self.A = A
         self.B = B
         self.G = G
@@ -31,6 +32,7 @@ class Agent:
         n_x = self.A.shape[1]
         n_u = self.B.shape[1]
         self.prev_mpc_traj = None
+        self.sigma=sigma
 
 
     def find_norm(self):
@@ -38,7 +40,10 @@ class Agent:
 
 
     def evolve_state(self, u):
-        self.x.append(self.A @ self.x[-1] + self.B @ u)
+        n_x = self.x[-1].shape[0]
+        assert (n_x == 4)
+        w =  (self.sigma*np.random.randn(n_x,1))if NOISY_ENV else np.zeros((n_x,1))
+        self.x.append(self.A @ self.x[-1] + self.B @ u+w)
         self.u.append(u)
 
 
@@ -55,18 +60,12 @@ class Agent:
 
 
     def add_orca_constraints(self, opti, x, idx, p_a, p_b, v_a, v_b, is_neighbor_dummy):
-        print("p_b"+str(p_b))
-        print("p_a"+str(p_a))
-        print("v_b"+str(v_b))
-        print("v_a"+str(v_a))
-        
         # projection = projectOnVO((p_b-p_a)/self.tau, 2*self.radius/self.tau, v_a-v_b)
         # region = projection["region"]
         # u  = projection["projected_point"]-(v_a-v_b)
         
         #TODO DEBUG
         u_new, _ , region = get_u(p_a, p_b, v_a, v_b, self.radius, self.radius, self.tau)
-        print("For ",p_a, p_b, v_a, v_b, self.radius, self.radius, self.tau)
         # assert(np.linalg.norm(u-u_new)<1e-3)
         u = u_new
         #END DEBUG
@@ -112,7 +111,6 @@ class Agent:
             agent_cur_state_dataset = [len(vel_dataset[agent._id])*[agent.x[len(self.x)-1]] for agent in agent_list] #
         for i in range(0,N):
             objective_sum += (x[[i+1],:].T-self.x_F ).T @ self.Q @ (x[[i+1],:].T-self.x_F) + u[[i],:] @ self.R @ u[[i],:].T
-            print(self.B)
             opti.subject_to(x[[i+1],:].T == self.A @ x[[i],:].T + self.B @ u[[i],:].T)
             if not (self.H @ x[[i+1],:].T <= self.h).is_constant():
                 opti.subject_to(self.H @ x[[i+1],:].T <= self.h)
@@ -134,7 +132,6 @@ class Agent:
                 else:
                     p_a = self.prev_mpc_traj[i][0:2]
                     v_a = self.prev_mpc_traj[i][2:4]
-                    print(len(agent_cur_state_dataset[agent._id]))
                     # abc = input("abc")
                     for ii in range(len(agent_cur_state_dataset[agent._id])):
                         x_b = agent_cur_state_dataset[agent._id][ii]
@@ -146,10 +143,10 @@ class Agent:
             # x_cur_pred = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]])@x_cur_pred
         
         opti.minimize(objective_sum)
+        
         opti.solver('ipopt')
         sol = opti.solve()
         self.prev_mpc_traj = [sol.value(x)[[i+1],:].T for i in range(0,N)]
-        print(self.prev_mpc_traj)
         # abc = input("abc")
         if N >1:
             return sol.value(u)[[0],:].T
@@ -171,20 +168,14 @@ class Agent:
     
 
     def plot_circle(self, x, y, radius):
-        theta = np.linspace(0,2*np.pi,10)
+        theta = np.linspace(0,2*np.pi,50)
         x1 = x+radius*np.cos(theta)
         x2 = y+radius*np.sin(theta)
-        plt.plot(x1,x2, color = self.color_list[self._id])
+        plt.plot(x1,x2, color = self.color_list[self._id], alpha=0.2)
 
 
     def plot_trajectory(self, plot_circles_flag=True):
-        print(f'agent_id: {self._id}:')
-        print("pos_x "+str([x_i[0,0] for x_i in self.x]))
-        print("pos_y "+str([x_i[1,0] for x_i in self.x]))
-        print("vel_x "+str([x_i[2,0] for x_i in self.x]))
-        print("vel_y "+str([x_i[3,0] for x_i in self.x]))
-        plt.plot([x_i[0,0] for x_i in self.x], [x_i[1,0] for x_i in self.x], label="Agent id: "+str(self._id))
-        print(plot_circles_flag)
+        plt.plot([x_i[0,0] for x_i in self.x], [x_i[1,0] for x_i in self.x], label="Agent id: "+str(self._id), color=self.color_list[self._id])
         if plot_circles_flag:
             self.plot_circles([x_i[0,0] for x_i in self.x], [x_i[1,0] for x_i in self.x], self.radius)
 

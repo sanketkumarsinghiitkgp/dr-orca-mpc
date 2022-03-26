@@ -12,15 +12,11 @@ def get_u(p_a, p_b, v_a, v_b, r_a, r_b, tau):
     theta_m = atan2(m[1],m[0])
     # print(theta_m)
     # print(norm(r_b+r_a)/norm(p_b-p_a))
-    print("NORMN IS: "+str(norm(p_b-p_a)))    
-    print("NORMD IS: "+str(norm(p_b-p_a)))
     theta_i = asin(  min(1,max(norm(r_b+r_a)/norm(p_b-p_a), -1)))
     plus_line_m = tan(theta_m+theta_i)
     minus_line_m = tan(theta_m-theta_i)
     lb = cos(pi/2 + theta_i)
     v_rel_p = (v_a-v_b)-(p_b-p_a)/tau
-    print(np.dot(m.T,v_rel_p/norm(v_rel_p))[0][0])
-    print(lb)
     if np.dot(m.T,v_rel_p/norm(v_rel_p))[0][0] < lb:
         n = (-(v_a-v_b)+(p_b-p_a)/tau)
         mag = norm(n)-((r_a+r_b)/tau)
@@ -59,5 +55,5 @@ def get_u(p_a, p_b, v_a, v_b, r_a, r_b, tau):
             # print('minus')
 
     n = u/norm(u)
-
+    
     return (u, n, sign) # +1 for outside, -1 for inside
