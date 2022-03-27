@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 import os
 import time
 import math
-SELECT = 5
-for SELECT in range(1,6):
+# SELECT_LIST = [1,2,3,4,5]
+SELECT_LIST = [3]
+for SELECT in SELECT_LIST:
     if SELECT == 1:
         avg_cost_vals = None
         avg_time_vals = None
@@ -13,7 +14,7 @@ for SELECT in range(1,6):
         # sigma = 0.01 gives decent results
         dataset_size_list = [x+1 for x in range(6)]
         frac_collide_list = []
-        sigma_list = [0,0.01,0.001,0.00001]
+        sigma_list = [0,0.01,0.001,0.00001,0.00003,0.00005]
         for sigma in sigma_list:
             frac_collide = []
             for dataset_size in dataset_size_list:
@@ -73,7 +74,7 @@ for SELECT in range(1,6):
         # sigma = 0.01 gives decent results
         N_list = [1, 5, 10, 20]
         frac_collide_list = []
-        sigma_list = [0,0.01,0.001,0.00001]
+        sigma_list = [0,0.01,0.001,0.00001,0.00003,0.00005]
         for sigma in sigma_list:
             frac_collide = []
             for N in N_list:
@@ -136,7 +137,8 @@ for SELECT in range(1,6):
         # sigma = 0.01 gives decent results
         dataset_size_list = [x+1 for x in range(6)]
         frac_collide_list = []
-        sigma_list = [0,0.01,0.001,0.00001]
+        # sigma_list = [0,0.01,0.001,0.00001,0.00003,0.00005]
+        sigma_list = [0.001,0.003,0.005,0.007,0.009]
         time_vals_list = []
         for sigma in sigma_list:
             frac_collide = []
@@ -211,7 +213,7 @@ for SELECT in range(1,6):
         # sigma = 0.01 gives decent results
         N_list = [1, 5, 10, 20]
         frac_collide_list = []
-        sigma_list = [0,0.01,0.001,0.00001]
+        sigma_list = [0,0.01,0.001,0.00001,0.00003,0.00005]
         time_vals_list = []
         for sigma in sigma_list:
             frac_collide = []
@@ -284,7 +286,7 @@ for SELECT in range(1,6):
     if SELECT == 5:
         #d_ij
         N_list = [1, 5, 10, 20]
-        sigma_list = [0,0.01,0.001,0.00001]
+        sigma_list = [0,0.01,0.001,0.00001,0.00003,0.00005]
         dataset_size_list = [x+1 for x in range(6)]
         for sigma in sigma_list:
             for N in N_list:
