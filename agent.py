@@ -43,6 +43,8 @@ class Agent:
         n_x = self.x[-1].shape[0]
         assert (n_x == 4)
         w =  (self.sigma*np.random.randn(n_x,1))if NOISY_ENV else np.zeros((n_x,1))
+        # if self.is_agent_dummy_list[self._id]:
+        #     w =  self.sigma*np.random.randn(n_x,1)
         self.x.append(self.A @ self.x[-1] + self.B @ u+w)
         self.u.append(u)
 
@@ -65,7 +67,10 @@ class Agent:
         # u  = projection["projected_point"]-(v_a-v_b)
         
         #TODO DEBUG
-        u_new, _ , region = get_u(p_a, p_b, v_a, v_b, self.radius, self.radius, self.tau)
+        try:
+            u_new, _ , region = get_u(p_a, p_b, v_a, v_b, self.radius, self.radius, self.tau)
+        except:
+            raise Exception("collision")
         # assert(np.linalg.norm(u-u_new)<1e-3)
         u = u_new
         #END DEBUG

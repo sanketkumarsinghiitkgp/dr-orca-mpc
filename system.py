@@ -71,35 +71,37 @@ class System:
                     return True
         return False
     def simulate_orca_mpc(self,max_iter = 200, eps=1e-3, N = 1, plot_circles_flag = True, plot_steps = True):
-        traj_cost = 0
-        for iter_num in tqdm(range(max_iter)):
-            # abc = input("abc")
-            for agent in self.agent_list:
-                agent.orca_mpc_update(N, self.agent_list, vel_dataset = self.vel_dataset, method = self.method)
-            if self.method!="constant_vel":
-                new_vel_dataset = []
+        try:
+            traj_cost = 0
+            for iter_num in tqdm(range(max_iter)):
+                # abc = input("abc")
                 for agent in self.agent_list:
-                    temp = []
-                    for i in range(1,len(self.vel_dataset[agent._id])):
-                        temp.append(self.vel_dataset[agent._id][i])
-                    temp.append(agent.x[-1][2:4])
-                    new_vel_dataset.append(copy.deepcopy(temp))
-                self.vel_dataset = new_vel_dataset
-            if plot_steps:
-                plt.figure().clear()
-                self.plot_trajectory(plot_circles_flag)
-                plt.savefig("system_trajectory.png")
-            cur_norm_sum = self.norm_sum()
-            traj_cost += cur_norm_sum
-            if self.collision():
-                return None
-            if(cur_norm_sum<eps):
-                print(f'Terminated after {iter_num} iterations')
-                return traj_cost
-        print(f'Terminated after {max_iter} iterations')
-        print(traj_cost)
-        return traj_cost
-
+                    agent.orca_mpc_update(N, self.agent_list, vel_dataset = self.vel_dataset, method = self.method)
+                if self.method!="constant_vel":
+                    new_vel_dataset = []
+                    for agent in self.agent_list:
+                        temp = []
+                        for i in range(1,len(self.vel_dataset[agent._id])):
+                            temp.append(self.vel_dataset[agent._id][i])
+                        temp.append(agent.x[-1][2:4])
+                        new_vel_dataset.append(copy.deepcopy(temp))
+                    self.vel_dataset = new_vel_dataset
+                if plot_steps:
+                    plt.figure().clear()
+                    self.plot_trajectory(plot_circles_flag)
+                    plt.savefig("system_trajectory.png")
+                cur_norm_sum = self.norm_sum()
+                traj_cost += cur_norm_sum
+                if self.collision():
+                    return None
+                if(cur_norm_sum<eps):
+                    print(f'Terminated after {iter_num} iterations')
+                    return traj_cost
+            print(f'Terminated after {max_iter} iterations')
+            print(traj_cost)
+            return traj_cost
+        except:
+            raise Exception("Collision!")
     # def simulate_orca(self,max_iter = 5, eps=1e-6):
     #     for iter_num in tqdm(range(max_iter)):
     #         if(self.norm_sum()<eps):
