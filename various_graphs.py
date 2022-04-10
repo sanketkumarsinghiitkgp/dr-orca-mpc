@@ -49,7 +49,7 @@ for SELECT in SELECT_LIST:
                     vel_dataset = [dataset_size*[np.zeros((2,1))] for i in range(num_agents)]
                     plot_circles_flag = False
                     dummy_vel = 0.5*radius
-                    system = System(A, B, G, g, H, h, radius, Q, R, x_0_list, x_F_list, vel_dataset = vel_dataset, method = "scenario", sigma=sigma)    
+                    system = System(A, B, G, g, H, h, radius, Q, R, x_0_list, x_F_list, vel_dataset = vel_dataset, method = "scenario", sigma=sigma, N=N)    
                     start_time = time.time()
                     traj_cost = system.simulate_orca_mpc(N = N, plot_circles_flag = plot_circles_flag, plot_steps=False)
                     if traj_cost == None:
@@ -110,14 +110,9 @@ for SELECT in SELECT_LIST:
                     vel_dataset = [dataset_size*[np.zeros((2,1))] for i in range(num_agents)]
                     plot_circles_flag = False
                     dummy_vel = 0.5*radius
-                    system = System(A, B, G, g, H, h, radius, Q, R, x_0_list, x_F_list, vel_dataset = vel_dataset, method = "scenario", sigma=sigma)    
+                    system = System(A, B, G, g, H, h, radius, Q, R, x_0_list, x_F_list, vel_dataset = vel_dataset, method = "scenario", sigma=sigma, N=N)    
                     start_time = time.time()
-                    try:
-                        traj_cost = system.simulate_orca_mpc(N = N, plot_circles_flag = plot_circles_flag, plot_steps=False)
-                    except:
-                        cnt_collide += 1
-                        continue
-
+                    traj_cost = system.simulate_orca_mpc(N = N, plot_circles_flag = plot_circles_flag, plot_steps=False)
                     if traj_cost == None:
                         cnt_collide += 1
                         continue
@@ -138,19 +133,18 @@ for SELECT in SELECT_LIST:
     if SELECT == 3:
         avg_cost_vals = None
         avg_time_vals = None
-        num_ensembles = 1
+        num_ensembles = 500
         # sigma = 0.01 gives decent results
-        # dataset_size_list = [(x+1) for x in range(1)]
-        dataset_size_list = [1]
+        dataset_size_list = [1,10,20,50,100]
         frac_collide_list = []
-        sigma_list = [0,0.000000025,0.000000035,0.000000045]
-        # sigma_list = [0.001,0.003,0.005,0.007,0.009]
+        sigma_list = [0.5e-4,0.7e-4,0.9e-4,1e-4,2e-4]
+        # sigma_list = [0.001]
         time_vals_list = []
         for sigma in sigma_list:
             frac_collide = []
             time_vals = []
             for dataset_size in dataset_size_list:
-                N = 1
+                N = 5
                 lines = []
                 cost_vals = []
                 cnt_collide = 0
@@ -179,7 +173,7 @@ for SELECT in SELECT_LIST:
                         x_0_list[i]+=np.array([[0],[vert_deviation_list[i]],[0],[0]])
                     num_agents = len(x_0_list)
                     plot_circles_flag = True
-                    dummy_vel = 0.5*radius/math.sqrt(2)
+                    dummy_vel = 0.8*radius/math.sqrt(2)
                     
                     # vel_dataset = [dataset_size*[np.zeros((2,1))] for i in range(num_agents)]
                     vel_dataset_dummy = [dummy_vel*np.ones((2,1))]
@@ -187,15 +181,12 @@ for SELECT in SELECT_LIST:
                         vel_dataset_dummy.append(vel_dataset_dummy[-1]+np.random.randn(2,1)*sigma)
 
                     vel_dataset = [dataset_size*[dummy_vel*np.ones((2,1))+np.random.randn(2,1)*sigma] for i in range(num_agents)]
+                    vel_dataset[1] = vel_dataset_dummy
                     is_agent_dummy_list = [False, True]
                     x_0_list[1] += np.array([[0],[0],[dummy_vel],[dummy_vel]])
-                    system = System(A, B, G, g, H, h, radius, Q, R, x_0_list, x_F_list, vel_dataset = vel_dataset, method = "scenario", sigma=sigma, is_agent_dummy_list=is_agent_dummy_list)    
+                    system = System(A, B, G, g, H, h, radius, Q, R, x_0_list, x_F_list, vel_dataset = vel_dataset, method = "scenario", sigma=sigma, is_agent_dummy_list=is_agent_dummy_list, N=N)    
                     start_time = time.time()
-                    try:
-                        traj_cost = system.simulate_orca_mpc(N = N, plot_circles_flag = plot_circles_flag, plot_steps=True)
-                    except:
-                        cnt_collide += 1
-                        continue
+                    traj_cost = system.simulate_orca_mpc(N = N, plot_circles_flag = plot_circles_flag, plot_steps=True)
                     if traj_cost == None:
                         cnt_collide += 1
                         continue
@@ -227,16 +218,19 @@ for SELECT in SELECT_LIST:
         avg_time_vals = None
         num_ensembles = 100 #DEBUG
         # sigma = 0.01 gives decent results
-        N_list = [1, 5, 10, 20]
+        # N_list = [1, 5, 10, 20]
+        N_list = [x+1 for x in range(10)]
         frac_collide_list = []
-        sigma_list = [0,0.01,0.001,0.00001,0.00003,0.00005]
+        # sigma_list = [1e-5*(x) for x in range(5)] worked quite well
+        # sigma_list = [1e-5*(x) for x in range(5)]
+        sigma_list = [1e-4,3e-4,7e-4]
         time_vals_list = []
         for sigma in sigma_list:
             frac_collide = []
             time_vals = []
             for N in N_list:
                 
-                dataset_size=5
+                dataset_size=10
                 lines = []
                 cost_vals = []
                 time_taken = 0
@@ -264,12 +258,19 @@ for SELECT in SELECT_LIST:
                     for i in range(len(x_0_list)):
                         x_0_list[i]+=np.array([[0],[vert_deviation_list[i]],[0],[0]])
                     num_agents = len(x_0_list)
-                    vel_dataset = [dataset_size*[np.zeros((2,1))] for i in range(num_agents)]
-                    plot_circles_flag = False
-                    dummy_vel = 0.5*radius/math.sqrt(2)
+                    plot_circles_flag = True
+                    dummy_vel = 0.8*radius/math.sqrt(2)
                     is_agent_dummy_list = [False, True]
+                    # vel_dataset = [dataset_size*[np.zeros((2,1))] for i in range(num_agents)]
+                    vel_dataset_dummy = [dummy_vel*np.ones((2,1))]
+                    for iter in range(dataset_size-1):
+                        vel_dataset_dummy.append(vel_dataset_dummy[-1]+np.random.randn(2,1)*sigma)
+
+                    vel_dataset = [dataset_size*[dummy_vel*np.ones((2,1))+np.random.randn(2,1)*sigma] for i in range(num_agents)]
+                    vel_dataset[1] = vel_dataset_dummy
+                    
                     x_0_list[1] += np.array([[0],[0],[dummy_vel],[dummy_vel]])
-                    system = System(A, B, G, g, H, h, radius, Q, R, x_0_list, x_F_list, vel_dataset = vel_dataset, method = "scenario", sigma=sigma, is_agent_dummy_list=is_agent_dummy_list)    
+                    system = System(A, B, G, g, H, h, radius, Q, R, x_0_list, x_F_list, vel_dataset = vel_dataset, method = "scenario", sigma=sigma, is_agent_dummy_list=is_agent_dummy_list, N=N)    
                     start_time = time.time()
                     traj_cost = system.simulate_orca_mpc(N = N, plot_circles_flag = plot_circles_flag, plot_steps=False)
                     if traj_cost == None:
@@ -334,7 +335,7 @@ for SELECT in SELECT_LIST:
                     dummy_vel = 0.5*radius/math.sqrt(2)
                     is_agent_dummy_list = [False, True]
                     x_0_list[1] += np.array([[0],[0],[dummy_vel],[dummy_vel]])
-                    system = System(A, B, G, g, H, h, radius, Q, R, x_0_list, x_F_list, vel_dataset = vel_dataset, method = "scenario", sigma=sigma, is_agent_dummy_list=is_agent_dummy_list)    
+                    system = System(A, B, G, g, H, h, radius, Q, R, x_0_list, x_F_list, vel_dataset = vel_dataset, method = "scenario", sigma=sigma, is_agent_dummy_list=is_agent_dummy_list, N=N)    
                     start_time = time.time()
                     traj_cost = system.simulate_orca_mpc(N = N, plot_circles_flag = plot_circles_flag, plot_steps=False)
                     system.plot_dij("d_ij"+"_"+str(sigma)+"_"+str(N)+"_"+str(dataset_size)+".png",0,1)

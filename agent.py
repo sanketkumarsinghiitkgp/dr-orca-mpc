@@ -43,8 +43,8 @@ class Agent:
         n_x = self.x[-1].shape[0]
         assert (n_x == 4)
         w =  (self.sigma*np.random.randn(n_x,1))if NOISY_ENV else np.zeros((n_x,1))
-        # if self.is_agent_dummy_list[self._id]:
-        #     w =  self.sigma*np.random.randn(n_x,1)
+        if self.is_agent_dummy_list[self._id]:
+            w =  self.sigma*np.random.randn(n_x,1)
         self.x.append(self.A @ self.x[-1] + self.B @ u+w)
         self.u.append(u)
 
@@ -67,10 +67,10 @@ class Agent:
         # u  = projection["projected_point"]-(v_a-v_b)
         
         #TODO DEBUG
-        try:
-            u_new, _ , region = get_u(p_a, p_b, v_a, v_b, self.radius, self.radius, self.tau)
-        except:
-            raise Exception("collision")
+        if(np.linalg.norm((p_b-p_a))<2*self.radius):
+            # assert(False)
+            return False
+        u_new, _ , region = get_u(p_a, p_b, v_a, v_b, self.radius, self.radius, self.tau)
         # assert(np.linalg.norm(u-u_new)<1e-3)
         u = u_new
         #END DEBUG
@@ -89,7 +89,7 @@ class Agent:
             else:
                 opti.subject_to((x[[idx],2:4].T-(v_a+u/2)).T@u>=0)
                 pass
-
+        return True
 
     def find_u_orca_mpc(self, N, agent_list, vel_dataset, method):
         n_x = self.A.shape[1]
@@ -142,7 +142,7 @@ class Agent:
                         x_b = agent_cur_state_dataset[agent._id][ii]
                         v_b = x_b[2:4]
                         p_b = x_b[0:2]
-                        self.add_orca_constraints(opti, x, i+1, p_a, p_b, v_a, v_b, is_neighbor_dummy = self.is_agent_dummy_list[agent._id])
+                        orca_success = self.add_orca_constraints(opti, x, i+1, p_a, p_b, v_a, v_b, is_neighbor_dummy = self.is_agent_dummy_list[agent._id])
                         agent_cur_state_dataset[agent._id][ii] = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]])@x_b # NOT REALLY???
             # using previous mpc solution.
             # x_cur_pred = np.array([[1, 0, 1, 0], [0, 1, 0, 1], [0, 0, 1, 0], [0, 0, 0, 1]])@x_cur_pred

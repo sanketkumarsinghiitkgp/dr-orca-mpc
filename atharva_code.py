@@ -4,8 +4,7 @@ from math import pi, cos, atan2, asin, tan
 import matplotlib.pyplot as plt
 
 def get_u(p_a, p_b, v_a, v_b, r_a, r_b, tau):
-    if norm((p_b-p_a)/tau) < (r_a+r_b):
-        raise Exception("Collision in get_u")
+    print("tau is: ",tau)
     # print('0')
     m = (p_b-p_a)
     m = m/norm(m)
