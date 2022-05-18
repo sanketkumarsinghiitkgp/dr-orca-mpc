@@ -1,1 +1,1 @@
-NOISY_ENV = False
+NOISY_ENV = True
